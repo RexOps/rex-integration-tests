@@ -1,7 +1,7 @@
 # vim: set syn=perl:
 
 use Rex -future;
-use Test::More;
+use Test::More tests => 12;
 use Rex::Commands::Fs;
 
 use Data::Dumper;

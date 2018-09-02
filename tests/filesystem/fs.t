@@ -1,7 +1,7 @@
 #!perl
 # vim: set syn=perl:
 use Rex -future;
-use Test::More;
+use Test::More tests => 25;
 use Rex::Commands::Fs;
 
 use lib '../../lib';
