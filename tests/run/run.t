@@ -1,7 +1,7 @@
 # vim: set syn=perl:
 
 use Rex -future;
-use Test::More tests => 12;
+use Test::More tests => 15;
 use Rex::Commands::Fs;
 
 use Data::Dumper;
@@ -54,5 +54,12 @@ ok($? == $expected_error_code, "got proper error code for 'command not found'");
 
 run "ls -l /not-there";
 ok($? != 0, "got non-zero return code for ls on unavailable directory.");
+
+my $to_1 = run "sleep 5; echo hi", timeout => 7;
+is($to_1, 'hi', "Timeout higher than execution time got output.");
+
+my $to_2 = run "sleep 10; echo hi", timeout => 5;
+is($to_2, 'timeout', "Timeout lower than execution time got timeout out.");
+is($?, -1, "Timeout lower than execution time got timeout \$?.");
 
 done_testing();
