@@ -1,7 +1,7 @@
 # vim: set syn=perl:
 
 use Rex -future;
-use Test::More tests => 15;
+use Test::More tests => 17;
 use Rex::Commands::Fs;
 
 use Data::Dumper;
@@ -61,5 +61,16 @@ is($to_1, 'hi', "Timeout higher than execution time got output.");
 my $to_2 = run "sleep 10; echo hi", timeout => 5;
 is($to_2, 'timeout', "Timeout lower than execution time got timeout out.");
 is($?, -1, "Timeout lower than execution time got timeout \$?.");
+
+my $autodie_1 = run "echo autodie_1", auto_die => 1;
+is($autodie_1, 'autodie_1', 'Command successfull, no autodie');
+
+eval {
+  run "ls -l /Sdfsdfsdf", auto_die => 1;
+  fail("Calling autodie failed.");
+};
+if($@) {
+  like($@, qr/Calling autodie/, "Catche autodie exception");
+}
 
 done_testing();
