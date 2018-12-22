@@ -1,13 +1,15 @@
 # vim: set syn=perl:
 
 use Rex -future;
-use Test::More tests => 7;
+use Test::More tests => 11;
 
 use Data::Dumper;
 
 use lib '../../lib';
 use Helper;
 require Rex::Commands::MD5;
+
+use Rex::Helper::Run;
 
 my $mods_loaded = sub {
   my ($mod) = @_;
@@ -44,7 +46,7 @@ SKIP: {
 };
 
 SKIP: {
-  skip "Only for Debian Clones", 4 unless is_debian();
+  skip "Only for Debian Clones", 8 unless is_debian();
   kmod "ntfs",
     ensure => "enabled";
 
@@ -56,6 +58,25 @@ SKIP: {
 
   is($mods_loaded->("ntfs"), 0, "Kernel module NOT loaded");
   is(is_file("/etc/modules-load.d/ntfs.conf"), undef, "Kernel module disabled");
+
+
+  kmod "ntfs",
+    ensure => "enabled",
+    provider => "::linux::debian_legacy";
+
+  my ($enabled) = grep { m/^ntfs$/ } i_run "cat /etc/modules";
+
+  is($mods_loaded->("ntfs"), 1, "Kernel module loaded");
+  is($enabled, "ntfs", "Kernel module enabled");
+
+  kmod "ntfs",
+    ensure => "disabled",
+    provider => "::linux::debian_legacy";
+
+  my ($disabled) = grep { m/^ntfs$/ } i_run "cat /etc/modules";
+
+  is($mods_loaded->("ntfs"), 0, "Kernel module NOT loaded");
+  is($disabled, undef, "Kernel module disabled");
 };
 
 done_testing();
