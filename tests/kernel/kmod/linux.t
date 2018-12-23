@@ -1,7 +1,7 @@
 # vim: set syn=perl:
 
 use Rex -future;
-use Test::More tests => 11;
+use Test::More tests => 23;
 
 use Data::Dumper;
 
@@ -21,13 +21,15 @@ my $mods_loaded = sub {
   return 0;
 };
 
+my $mod_to_test = "cifs";
+
 SKIP: {
   skip "Only for Linux", 3 unless is_linux();
 
-  kmod "ntfs",
+  kmod $mod_to_test,
     ensure => "present";
 
-  is($mods_loaded->("ntfs"), 1, "Kernel module loaded");
+  is($mods_loaded->($mod_to_test), 1, "Kernel module loaded");
 
   eval {
     kmod "no-valid-module",
@@ -38,11 +40,61 @@ SKIP: {
     like($@, qr/Calling autodie/, "Catch autodie exception");
   }
 
-  kmod "ntfs",
+  kmod $mod_to_test,
     ensure => "absent";
 
-  is($mods_loaded->("ntfs"), 0, "Kernel module NOT loaded");
+  is($mods_loaded->($mod_to_test), 0, "Kernel module NOT loaded");
 
+};
+
+SKIP: {
+  skip "Only for Redhat Clones", 12 unless is_redhat();
+
+  kmod "cifs",
+    ensure => "enabled";
+
+  is($mods_loaded->("cifs"), 1, "Kernel module loaded");
+  is(Rex::Commands::MD5::md5("/etc/modules-load.d/cifs.conf"), "2a56eb5b4be2d5634983c3d2f33e44eb", "Kernel module enabled");
+
+  kmod "cifs",
+    ensure => "disabled";
+
+  is($mods_loaded->("cifs"), 0, "Kernel module NOT loaded");
+  is(is_file("/etc/modules-load.d/cifs.conf"), undef, "Kernel module disabled");
+
+
+  kmod "cifs",
+    ensure => "enabled",
+    provider => "::linux::redhat_5";
+
+  my ($enabled) = grep { m/^cifs$/ } i_run "cat /etc/rc.modules";
+
+  is($mods_loaded->("cifs"), 1, "Kernel module loaded");
+  is($enabled, "cifs", "Kernel module enabled");
+
+  kmod "cifs",
+    ensure => "disabled",
+    provider => "::linux::redhat_5";
+
+  my ($disabled) = grep { m/^cifs$/ } i_run "cat /etc/rc.modules";
+
+  is($mods_loaded->("cifs"), 0, "Kernel module NOT loaded");
+  is($disabled, undef, "Kernel module disabled");
+
+
+  kmod "cifs",
+    ensure => "enabled",
+    provider => "::linux::redhat_6";
+
+  is($mods_loaded->("cifs"), 1, "Kernel module loaded");
+  is(is_file("/etc/sysconfig/modules/cifs.modules"), 1, "Kernel module disabled");
+
+  kmod "cifs",
+    ensure => "disabled",
+    provider => "::linux::redhat_6";
+
+  is($mods_loaded->("cifs"), 0, "Kernel module NOT loaded");
+  is(is_file("/etc/sysconfig/modules/cifs.modules"), undef, "Kernel module disabled");
 };
 
 SKIP: {
