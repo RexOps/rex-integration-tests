@@ -1,8 +1,9 @@
 #!perl
 # vim: set syn=perl:
+use Rex::Commands::Fs;
+
 use Rex -future;
 use Test::More tests => 25;
-use Rex::Commands::Fs;
 
 use lib '../../lib';
 use Helper;
@@ -70,19 +71,19 @@ eval {
 ok(is_dir("tmp"), "mkdir: relative dir");
 
 rename "/tmp/chmod.test", "/tmp/rename.test";
-ok(is_file("/tmp/rename.test"), "rename: chmod.test to rename.test");
+is(is_file("/tmp/rename.test"), 1, "rename: chmod.test to rename.test");
 
-ok(!is_file("/tmp/copy.test"), "copy.test not there yet");
+is(is_file("/tmp/copy.test"), undef, "copy.test not there yet");
 cp "/tmp/rename.test", "/tmp/copy.test";
-ok(is_file("/tmp/copy.test"), "cp: copy.test exists");
+is(is_file("/tmp/copy.test"), 1, "cp: copy.test exists");
 
 file "/a/b/c/d", ensure => "directory";
-ok(is_dir("/a/b/c/d"), "created /a/b/c/d directory with file resource.");
-ok(!is_file("/a/b/c/d"), "/a/b/c/d is not a file.");
+is(is_dir("/a/b/c/d"), 1, "created /a/b/c/d directory with file resource.");
+is(is_file("/a/b/c/d"), undef, "/a/b/c/d is not a file.");
 
 file "/a/b/c/d", ensure => "absent";
-ok(!is_dir("/a/b/c/d"), "removed /a/b/c/d directory with file resource.");
-ok(!is_file("/a/b/c/d"), "/a/b/c/d is not a file.");
+is(is_dir("/a/b/c/d"), undef, "removed /a/b/c/d directory with file resource.");
+is(is_file("/a/b/c/d"), undef, "/a/b/c/d is not a file.");
 
 ### cleanup
 run "rm -rf /tmp/ug; rm -f /tmp/copy.test; rm -f /tmp/rename.test";
